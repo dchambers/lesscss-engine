@@ -47,28 +47,49 @@ public class LessEngineTest {
     
     @Test
     public void compileToString() throws LessException, IOException {
-        assertEquals("body {\n  color: #f0f0f0;\n}\n", 
+        assertEquals("body {\n  color: #f0f0f0;\n  background-image: url(\"bg.png\");\n}\n", 
                 engine.compile(getClass().getClassLoader().getResource("META-INF/test.css")));
     }
-    
-    @Test
-    public void compileToFile() throws LessException, IOException {
-        File tempDir = new File(System.getProperty("java.io.tmpdir"));
-        File tempFile = File.createTempFile("less.css", null, tempDir);
-        engine.compile(
-        		new File(getClass().getClassLoader().getResource("META-INF/test.css").getPath()), 
-        		new File(tempFile.getAbsolutePath()));
-        FileInputStream fstream = new FileInputStream(tempFile.getAbsolutePath());
-        DataInputStream in = new DataInputStream(fstream);
-        BufferedReader br = new BufferedReader(new InputStreamReader(in));
-        String strLine;
-        StringBuilder sb = new StringBuilder();
-        while ((strLine = br.readLine()) != null) {
-            sb.append(strLine);
-        }
-        in.close();
-        assertEquals("body {  color: #f0f0f0;}", sb.toString());
-        tempFile.delete();
-    }
-    
+	
+	private String getCss(final String cssPath) throws LessException, IOException {
+		File tempDir = new File(System.getProperty("java.io.tmpdir"));
+		File tempFile = File.createTempFile("less.css", null, tempDir);
+		engine.compile(
+			new File(getClass().getClassLoader().getResource("META-INF/" + cssPath).getPath()), 
+			new File(tempFile.getAbsolutePath()));
+		FileInputStream fstream = new FileInputStream(tempFile.getAbsolutePath());
+		DataInputStream in = new DataInputStream(fstream);
+		BufferedReader br = new BufferedReader(new InputStreamReader(in));
+		String strLine;
+		StringBuilder sb = new StringBuilder();
+		while ((strLine = br.readLine()) != null) {
+			sb.append(strLine);
+		}
+		in.close();
+		tempFile.delete();
+		 
+		return sb.toString();
+	}
+	
+	@Test
+	public void compileToFile() throws LessException, IOException {
+		assertEquals("body {  color: #f0f0f0;  background-image: url(\"bg.png\");}", getCss("test.css"));
+	}
+	
+	private final String DEEP_CSS = "body {  background-image: url(\"dir1/dir2/relative.png\"), url('/host-relative.png'), url(\"//scheme-relative.png\"), url(http://acme.com/absolute.png);}";
+	
+	@Test
+	public void deepImport() throws LessException, IOException {
+		assertEquals(DEEP_CSS, getCss("deep-import.css"));
+	}
+	
+	@Test
+	public void chainedImportUsingStringNotation() throws LessException, IOException {
+		assertEquals(DEEP_CSS, getCss("chained-import-using-string-notation.css"));
+	}
+	
+	@Test
+	public void chainedImportUsingUrlNotation() throws LessException, IOException {
+		assertEquals(DEEP_CSS, getCss("chained-import-using-url-notation.css"));
+	}
 }

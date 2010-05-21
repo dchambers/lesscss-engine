@@ -1,0 +1,3 @@
+body {
+	background-image: url(relative.png), url('/host-relative.png'), url("//scheme-relative.png"), url(http://acme.com/absolute.png);
+}
